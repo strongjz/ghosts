@@ -60,5 +60,12 @@ Usage of ghosts:
  mfa_serial="arn:aws:iam::[ACCOUNT_NUMBER]:mfa/[IAM_USERNAME]"
  
  
+ Go STS overview
+ 
  https://docs.aws.amazon.com/sdk-for-go/api/service/sts/#pkg-overview
+ 
+ Inspired by 
+ 
+ https://github.com/wernerb/aws-adfs/blob/master/aws-adfs.go
+ 
  
