@@ -57,37 +57,37 @@ func parseConfig(section string, config string){
 
 	cfg, err := ini.Load(config)
 	if err != nil{
-		fmt.Print("Error loading config: %v", err)
+		fmt.Printf("Error loading config: %v", err)
 		os.Exit(3)
 	}
 
 	sec, err := cfg.GetSection(section)
 	if err != nil{
-		fmt.Print("Section %v not found in config: %v", section, err)
+		fmt.Printf("Section %v not found in config: %v", section, err)
 		os.Exit(3)
 	}
 
 	base,err := sec.GetKey("base")
 	if err != nil{
-		fmt.Print("Base profile required in config: %v", err)
+		fmt.Printf("Base profile required in config: %v", err)
 		os.Exit(3)
 	}
 
 	role, err := sec.GetKey("role")
 	if err != nil{
-		fmt.Print("Role required in config: %v", err)
+		fmt.Printf("Role required in config: %v", err)
 		os.Exit(3)
 	}
 
 	mfa_serial,err  := sec.GetKey("mfa_serial")
 	if err != nil{
-		fmt.Print("MFA Serial required in config: %v", err)
+		fmt.Printf("MFA Serial required in config: %v", err)
 		os.Exit(3)
 	}
 
 	profile, err := sec.GetKey("profile")
 	if err != nil{
-		fmt.Print("Profile required in config: %v", err)
+		fmt.Printf("Profile required in config: %v", err)
 		os.Exit(3)
 	}
 
