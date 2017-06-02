@@ -47,6 +47,7 @@ Usage of ghosts:
  
  Config File Syntax
  
+~~~YAML
  [profile1]
  base="base1"
  role="arn:aws:iam::[ACCOUNT_NUMBER]:role/[ROLENAME]"
@@ -58,7 +59,7 @@ Usage of ghosts:
  role="arn:aws:iam::[ACCOUNT_NUMBER]:role/[ROLENAME]"
  profile="[PROFILE_TO_UPDATE]"
  mfa_serial="arn:aws:iam::[ACCOUNT_NUMBER]:mfa/[IAM_USERNAME]"
- 
+~~~
  
  Go STS overview
  
