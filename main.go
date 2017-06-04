@@ -1,17 +1,19 @@
 package main
 
 import (
+	"errors"
+	"flag"
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/aws/aws-sdk-go/aws"
-	"fmt"
-	"flag"
 	"github.com/go-ini/ini"
 	"os"
 	"path/filepath"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
+// Returns the file path to the credentails files
 func getIniLocation() string {
 	if filename := os.Getenv("AWS_SHARED_CREDENTIALS_FILE"); filename != "" {
 		return filename
@@ -30,6 +32,7 @@ func getIniLocation() string {
 	return filepath.Join(homeDir, ".aws", "credentials")
 }
 
+// Writes out the configs generated from STS to the ~/.aws/credentials file or where AWS_SHARED_CREDENTIALS_FILE is define
 func writeIni(sectionName string, credentials *sts.AssumeRoleOutput) {
 	iniLocation := getIniLocation()
 
@@ -50,137 +53,157 @@ func writeIni(sectionName string, credentials *sts.AssumeRoleOutput) {
 	cfg.Section(sectionName).NewKey("aws_session_token", aws.StringValue(credentials.Credentials.SessionToken))
 	cfg.SaveTo(iniLocation)
 
-
 }
 
-func parseConfig(section string, config string){
+// Parses the INI file to populate the sts creds api call.
+func parseConfig(section string, config string) error {
 
 	cfg, err := ini.Load(config)
-	if err != nil{
-		fmt.Printf("Error loading config: %v", err)
-		os.Exit(3)
+	if err != nil {
+		return err
 	}
 
 	sec, err := cfg.GetSection(section)
-	if err != nil{
-		fmt.Printf("Section %v not found in config: %v", section, err)
-		os.Exit(3)
+	if err != nil {
+		return err
 	}
 
-	base,err := sec.GetKey("base")
-	if err != nil{
-		fmt.Printf("Base profile required in config: %v", err)
-		os.Exit(3)
+	base, err := sec.GetKey("base")
+	if err != nil {
+		return err
 	}
 
 	role, err := sec.GetKey("role")
-	if err != nil{
-		fmt.Printf("Role required in config: %v", err)
-		os.Exit(3)
+	if err != nil {
+		return err
 	}
 
-	mfa_serial,err  := sec.GetKey("mfa_serial")
-	if err != nil{
-		fmt.Printf("MFA Serial required in config: %v", err)
-		os.Exit(3)
+	mfa_serial, err := sec.GetKey("mfa_serial")
+	if err != nil {
+		return err
 	}
 
 	profile, err := sec.GetKey("profile")
-	if err != nil{
-		fmt.Printf("Profile required in config: %v", err)
-		os.Exit(3)
+	if err != nil {
+		return err
 	}
 
 	flag.Set("base", base.String())
 	flag.Set("arn", role.String())
 	flag.Set("serial", mfa_serial.String())
 	flag.Set("profile", profile.String())
+
+	return nil
 }
 
+func checkFlags() error {
 
-//Profile Name
-
-func main() {
-
-	base := flag.String("base", "default", "base profile assuming")
-
-	profile := flag.String("profile", "", "profile to write creds out too")
-
-	role_arn := flag.String("arn", "", "Role ARN")
-	sess_name := flag.String("name", "sts-sesssion","name of the session")
-
-	duration := flag.Int64("duration", 900, "number of seconds credentails will last")
-	mfa_bool := flag.Bool("mfa", false, "indicates if a mfa is need for this role")
-	mfa_token := flag.String("token", "","MFA token value")
-	mfa_serial := flag.String("serial","","MFA serial number, arn:aws:iam::123456789012:mfa/user")
-	debug := flag.Bool("debug", false, "debug output")
-
-	config := flag.String("config", "", "Config file that contains assume role informations")
-
-	flag.Parse()
-
-	if *mfa_token != "" {
-		*mfa_bool = true
+	if role_arn == "" {
+		return errors.New("Role ARN must be set\n")
 	}
 
-	if *config != ""{
-		parseConfig(*profile, *config)
+	if mfa_token != "" {
+		mfa_bool = true
 	}
 
+	if duration > 3600 {
+		return errors.New("Duration must be between 900 and 3600 seconds\n")
+	}
 
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Profile: *base,
-		SharedConfigState: session.SharedConfigEnable,
+	if config != "" {
+		return parseConfig(profile, config)
+	}
 
-	}))
+	return nil
 
+}
 
-	svc := sts.New(sess)
+var (
+	base       string
+	profile    string
+	role_arn   string
+	sess_name  string
+	duration   int64
+	mfa_bool   bool
+	mfa_token  string
+	mfa_serial string
+	debug      bool
+	config     string
+)
 
+func assumeRoleInput() *sts.AssumeRoleInput {
 	params := &sts.AssumeRoleInput{
-		RoleArn:         aws.String(*role_arn),             // Required
-		RoleSessionName: aws.String(*sess_name), // Required
-		DurationSeconds: aws.Int64(*duration),
-
+		RoleArn:         aws.String(role_arn),  // Required
+		RoleSessionName: aws.String(sess_name), // Required
+		DurationSeconds: aws.Int64(duration),
 	}
 
-	if *mfa_bool {
-		if (*mfa_token == "" ){
+	if mfa_bool {
+		if mfa_token == "" {
 
 			fmt.Println("MFA is enabled and token must be set")
 			os.Exit(1)
 		}
-		if (*mfa_serial == "" ){
+		if mfa_serial == "" {
 			fmt.Println("MFA is enabled and serial must be set")
 			os.Exit(1)
 		}
 
 		params = &sts.AssumeRoleInput{
-			RoleArn:         aws.String(*role_arn),             // Required
-			RoleSessionName: aws.String(*sess_name), // Required
-			DurationSeconds: aws.Int64(*duration),
-			SerialNumber:    aws.String(*mfa_serial),
-			TokenCode:       aws.String(*mfa_token),
+			RoleArn:         aws.String(role_arn),  // Required
+			RoleSessionName: aws.String(sess_name), // Required
+			DurationSeconds: aws.Int64(duration),
+			SerialNumber:    aws.String(mfa_serial),
+			TokenCode:       aws.String(mfa_token),
 		}
 	}
 
-	if *debug {
+	return params
+}
+
+func main() {
+
+	flag.StringVar(&base, "base", "default", "base profile assuming")
+	flag.StringVar(&profile, "profile", "", "profile to write creds out too")
+	flag.StringVar(&role_arn, "arn", "", "Required - Role ARN")
+	flag.StringVar(&sess_name, "name", "sts-session", "name of the session")
+	flag.Int64Var(&duration, "duration", 900, "Number of seconds credentials will last, 900 - 3600")
+	flag.BoolVar(&mfa_bool, "mfa", false, "indicates if a mfa is need for this role")
+	flag.StringVar(&mfa_token, "token", "", "MFA token value. Requireed if MFA set.")
+	flag.StringVar(&mfa_serial, "serial", "", "MFA serial number, ie arn:aws:iam::123456789012:mfa/user - Required if MFA set. ")
+	flag.BoolVar(&debug, "debug", false, "debug output")
+	flag.StringVar(&config, "config", "", "Config file that contains assume role information")
+
+	flag.Parse()
+
+	err := checkFlags()
+	if err != nil {
+		fmt.Printf("Error %v\n", err)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		Profile:           base,
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	svc := sts.New(sess)
+
+	params := assumeRoleInput()
+
+	if debug {
 		fmt.Printf("DEBUG: Params %v", params)
 	}
 
 	resp, err := svc.AssumeRole(params)
-
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-
 		fmt.Println(err.(awserr.Error))
 
 		os.Exit(2)
 	}
 
-	if *profile == "" {
+	if profile == "" {
 		os.Setenv("AWS_ACCESS_KEY_ID", aws.StringValue(resp.Credentials.AccessKeyId))
 		os.Setenv("AWS_SECRET_ACCESS_KEY", aws.StringValue(resp.Credentials.SecretAccessKey))
 		os.Setenv("AWS_SESSION_TOKEN", aws.StringValue(resp.Credentials.SessionToken))
@@ -189,12 +212,12 @@ func main() {
 		fmt.Printf("export AWS_SESSION_TOKEN=%s\n", os.Getenv("AWS_SESSION_TOKEN"))
 		fmt.Printf("export AWS_SECURITY_TOKEN=\"$AWS_SESSION_TOKEN\"\n")
 
-	}else {
-		writeIni(*profile, resp)
+	} else {
+		writeIni(profile, resp)
 	}
 
 	// Pretty-print the response data.
-	if *debug {
+	if debug {
 		fmt.Println(resp)
 	}
 

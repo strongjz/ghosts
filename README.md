@@ -15,7 +15,7 @@ Usage of ghosts:
 
   -base string base profile assuming (default "default")
 
-  -config string  Config file that contains assume role informations
+  -config string  Config file that contains assume role information
 
   -debug debug output
 
@@ -23,7 +23,7 @@ Usage of ghosts:
 
   -mfa indicates if a mfa is need for this role
 
-  -name string name of the session (default "sts-sesssion")
+  -name string name of the session (default "sts-session")
 
   -profile string profile to write credentials out too
 
