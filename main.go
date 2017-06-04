@@ -55,7 +55,7 @@ func writeIni(sectionName string, credentials *sts.AssumeRoleOutput) {
 
 }
 
-// Parses the INI file to populate the sts creds api call.
+// Parses the INI file to populate the sts credentials api call.
 func parseConfig(section string, config string) error {
 
 	cfg, err := ini.Load(config)
@@ -73,7 +73,7 @@ func parseConfig(section string, config string) error {
 		return err
 	}
 
-	role, err := sec.GetKey("role")
+	role, err := sec.GetKey("role_arn")
 	if err != nil {
 		return err
 	}
@@ -86,6 +86,16 @@ func parseConfig(section string, config string) error {
 	profile, err := sec.GetKey("profile")
 	if err != nil {
 		return err
+	}
+
+	sess_name, err := sec.GetKey("session_name")
+	if err != nil {
+
+		flag.Set("sess_name", fmt.Sprintf("sts-creds-%s", profile.String()))
+
+	} else {
+		flag.Set("sess_name", sess_name.String())
+
 	}
 
 	flag.Set("base", base.String())
@@ -171,6 +181,20 @@ func init() {
 	flag.StringVar(&config, "config", "", "Config file that contains assume role information")
 }
 
+func printFlags() {
+	fmt.Printf("\nDebug Printout of flags\n")
+	fmt.Printf("base: %v\n", base)
+	fmt.Printf("profile: %v\n", profile)
+	fmt.Printf("role_arn: %v\n", role_arn)
+	fmt.Printf("sess_name: %v\n", sess_name)
+	fmt.Printf("duration: %v\n", duration)
+	fmt.Printf("mfa_bool: %v\n", mfa_bool)
+	fmt.Printf("mfa_token: %v\n", mfa_token)
+	fmt.Printf("mfa_serial: %v\n", mfa_serial)
+	fmt.Printf("debug: %v\n", debug)
+	fmt.Printf("config: %v\n", config)
+}
+
 func main() {
 
 	flag.Parse()
@@ -190,6 +214,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if debug {
+		printFlags()
+	}
+
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		Profile:           base,
 		SharedConfigState: session.SharedConfigEnable,
@@ -200,7 +228,7 @@ func main() {
 	params := assumeRoleInput()
 
 	if debug {
-		fmt.Printf("DEBUG: Params %v\n", params)
+		fmt.Printf("\nDEBUG: Params %v\n", params)
 	}
 
 	resp, err := svc.AssumeRole(params)
@@ -225,6 +253,7 @@ func main() {
 
 	// Pretty-print the response data.
 	if debug {
+		fmt.Println("\nRepsonse:\n")
 		fmt.Println(resp)
 	}
 
