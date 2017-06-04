@@ -110,26 +110,9 @@ func checkFlags() error {
 		return errors.New("Duration must be between 900 and 3600 seconds\n")
 	}
 
-	if config != "" {
-		return parseConfig(profile, config)
-	}
-
 	return nil
 
 }
-
-var (
-	base       string
-	profile    string
-	role_arn   string
-	sess_name  string
-	duration   int64
-	mfa_bool   bool
-	mfa_token  string
-	mfa_serial string
-	debug      bool
-	config     string
-)
 
 func assumeRoleInput() *sts.AssumeRoleInput {
 	params := &sts.AssumeRoleInput{
@@ -141,11 +124,11 @@ func assumeRoleInput() *sts.AssumeRoleInput {
 	if mfa_bool {
 		if mfa_token == "" {
 
-			fmt.Println("MFA is enabled and token must be set")
+			fmt.Println("MFA is enabled and token must be set\n")
 			os.Exit(1)
 		}
 		if mfa_serial == "" {
-			fmt.Println("MFA is enabled and serial must be set")
+			fmt.Println("MFA is enabled and serial must be set\n")
 			os.Exit(1)
 		}
 
@@ -161,7 +144,20 @@ func assumeRoleInput() *sts.AssumeRoleInput {
 	return params
 }
 
-func main() {
+var (
+	base       string
+	profile    string
+	role_arn   string
+	sess_name  string
+	duration   int64
+	mfa_bool   bool
+	mfa_token  string
+	mfa_serial string
+	debug      bool
+	config     string
+)
+
+func init() {
 
 	flag.StringVar(&base, "base", "default", "base profile assuming")
 	flag.StringVar(&profile, "profile", "", "profile to write creds out too")
@@ -173,8 +169,19 @@ func main() {
 	flag.StringVar(&mfa_serial, "serial", "", "MFA serial number, ie arn:aws:iam::123456789012:mfa/user - Required if MFA set. ")
 	flag.BoolVar(&debug, "debug", false, "debug output")
 	flag.StringVar(&config, "config", "", "Config file that contains assume role information")
+}
+
+func main() {
 
 	flag.Parse()
+
+	if config != "" {
+		err := parseConfig(profile, config)
+		if err != nil {
+			fmt.Printf("Error %v\n", err)
+			os.Exit(1)
+		}
+	}
 
 	err := checkFlags()
 	if err != nil {
@@ -193,12 +200,12 @@ func main() {
 	params := assumeRoleInput()
 
 	if debug {
-		fmt.Printf("DEBUG: Params %v", params)
+		fmt.Printf("DEBUG: Params %v\n", params)
 	}
 
 	resp, err := svc.AssumeRole(params)
 	if err != nil {
-		fmt.Println(err.(awserr.Error))
+		fmt.Printf("Error with Assume Role %v\n", err.(awserr.Error))
 
 		os.Exit(2)
 	}
