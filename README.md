@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/strongjz/ghosts)](https://goreportcard.com/report/github.com/strongjz/ghosts)
+
 # ghosts
 Ghosts - Go implementation that will help manage multiple STS credentials for shared AWS accounts
 
