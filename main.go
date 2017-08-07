@@ -134,11 +134,11 @@ func assumeRoleInput() *sts.AssumeRoleInput {
 	if mfa_bool {
 		if mfa_token == "" {
 
-			fmt.Println("MFA is enabled and token must be set\n")
+			fmt.Println("MFA is enabled and token must be set")
 			os.Exit(1)
 		}
 		if mfa_serial == "" {
-			fmt.Println("MFA is enabled and serial must be set\n")
+			fmt.Println("MFA is enabled and serial must be set")
 			os.Exit(1)
 		}
 
@@ -253,7 +253,7 @@ func main() {
 
 	// Pretty-print the response data.
 	if debug {
-		fmt.Println("\nRepsonse:\n")
+		fmt.Printf("\nRepsonse:\n")
 		fmt.Println(resp)
 	}
 
