@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 )
 
-// Returns the file path to the credentails files
+// Returns the file path to the credentials files
 func getIniLocation() string {
 	if filename := os.Getenv("AWS_SHARED_CREDENTIALS_FILE"); filename != "" {
 		return filename
