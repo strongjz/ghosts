@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 )
 
-// Returns the file path to the credentails files
+// Returns the file path to the credentials files
 func getIniLocation() string {
 	if filename := os.Getenv("AWS_SHARED_CREDENTIALS_FILE"); filename != "" {
 		return filename
@@ -106,6 +106,13 @@ func parseConfig(section string, config string) error {
 	return nil
 }
 
+// loadConfigs will load all config files in the getIniLocation() path
+func loadConfigs(dir string) {
+
+
+
+
+}
 func checkFlags() error {
 
 	if role_arn == "" {
