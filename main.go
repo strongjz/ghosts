@@ -109,9 +109,6 @@ func parseConfig(section string, config string) error {
 // loadConfigs will load all config files in the getIniLocation() path
 func loadConfigs(dir string) {
 
-
-
-
 }
 func checkFlags() error {
 
@@ -177,12 +174,12 @@ var (
 func init() {
 
 	flag.StringVar(&base, "base", "default", "base profile assuming")
-	flag.StringVar(&profile, "profile", "", "profile to write creds out too")
+	flag.StringVar(&profile, "profile", "", "profile to write credentials out too")
 	flag.StringVar(&role_arn, "arn", "", "Required - Role ARN")
 	flag.StringVar(&sess_name, "name", "sts-session", "name of the session")
 	flag.Int64Var(&duration, "duration", 900, "Number of seconds credentials will last, 900 - 3600")
 	flag.BoolVar(&mfa_bool, "mfa", false, "indicates if a mfa is need for this role")
-	flag.StringVar(&mfa_token, "token", "", "MFA token value. Requireed if MFA set.")
+	flag.StringVar(&mfa_token, "token", "", "MFA token value. Required if MFA set.")
 	flag.StringVar(&mfa_serial, "serial", "", "MFA serial number, ie arn:aws:iam::123456789012:mfa/user - Required if MFA set. ")
 	flag.BoolVar(&debug, "debug", false, "debug output")
 	flag.StringVar(&config, "config", "", "Config file that contains assume role information")
